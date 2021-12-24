@@ -8,36 +8,41 @@ mod tests {
 
     #[test]
     fn adding_empty_string_returns_zero() {
-        assert_eq!(0, add(""));
+        assert_eq!(0, add("").unwrap());
     }
 
     #[test]
     fn adding_single_number_string_returns_number() {
-        assert_eq!(3, add("3"));
-        assert_eq!(66, add("66"));
+        assert_eq!(3, add("3").unwrap());
+        assert_eq!(66, add("66").unwrap());
     }
 
     #[test]
     fn adding_multiple_comma_separated_numbers_returns_sum() {
-        assert_eq!(7, add("3,4"));
+        assert_eq!(7, add("3,4").unwrap());
     }
 
     #[test]
     fn adding_multiple_newline_separated_numbers_returns_sum() {
-        assert_eq!(10, add("9\n1"));
-        assert_eq!(15, add("9\n1,5"));
+        assert_eq!(10, add("9\n1").unwrap());
+        assert_eq!(15, add("9\n1,5").unwrap());
     }
 
     #[test]
     fn adding_supports_custom_delimiter() {
-        assert_eq!(12, add("//;\n6;6"));
-        assert_eq!(12, add("//###\n6###6"));
+        assert_eq!(12, add("//;\n6;6").unwrap());
+        assert_eq!(12, add("//###\n6###6").unwrap());
+    }
+
+    #[test]
+    fn adding_negative_numbers_not_allowed() {
+        assert_eq!(Err(String::from("negatives not allowed: -1")), add("6,-1"));
     }
 }
 
-pub fn add(numbers: &str) -> i32 {
+pub fn add(numbers: &str) -> Result<i32, String> {
     if numbers.is_empty() {
-        return 0;
+        return Ok(0);
     }
 
     let mut tmp_numbers = String::new();
@@ -51,13 +56,21 @@ pub fn add(numbers: &str) -> i32 {
         tmp_numbers.push_str(numbers);
     }
 
-    Regex::new(delimiters.join("|").as_str())
+    let iter: Vec<i32> = Regex::new(delimiters.join("|").as_str())
         .expect("invalid delimiter pattern")
         .split(&tmp_numbers)
-        .into_iter()
         .map(|t| match i32::from_str(t) {
             Ok(num) => num,
             Err(_) => 0,
         })
-        .sum()
+        .collect();
+
+    let mut sum = 0;
+    for x in iter {
+        if x.is_negative() {
+            return Err(format!("negatives not allowed: {}", x));
+        }
+        sum += x
+    }
+    Ok(sum)
 }
