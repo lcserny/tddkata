@@ -31,12 +31,22 @@ mod tests {
     #[test]
     fn adding_supports_custom_delimiter() {
         assert_eq!(12, add("//;\n6;6").unwrap());
-        assert_eq!(12, add("//###\n6###6").unwrap());
+        assert_eq!(12, add("//#\n6#6").unwrap());
     }
 
     #[test]
     fn adding_negative_numbers_not_allowed() {
         assert_eq!(Err(String::from("negatives not allowed: -1")), add("6,-1"));
+    }
+
+    #[test]
+    fn adding_big_numbers_ignores_them() {
+        assert_eq!(12, add("//;\n12;1003").unwrap());
+    }
+
+    #[test]
+    fn adding_custom_delimiter_can_be_multiple_chars() {
+        assert_eq!(12, add("//[###]\n6###6").unwrap());
     }
 }
 
@@ -70,7 +80,9 @@ pub fn add(numbers: &str) -> Result<i32, String> {
         if x.is_negative() {
             return Err(format!("negatives not allowed: {}", x));
         }
-        sum += x
+        if x <= 1000 {
+            sum += x
+        }
     }
     Ok(sum)
 }
